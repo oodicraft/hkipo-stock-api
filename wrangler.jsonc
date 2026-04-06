@@ -1,0 +1,28 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "hkipo-backend",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-04-06",
+  "workers_dev": false,
+  "observability": {
+    "enabled": true
+  },
+  "routes": [
+    {
+      "pattern": "hkipo.langtangs.com",
+      "custom_domain": true
+    }
+  ],
+  "triggers": {
+    "crons": [
+      "17 11 * * *"
+    ]
+  },
+  "d1_databases": [
+    {
+      "binding": "HKIPO_DB",
+      "database_name": "hkipo-db-prod",
+      "database_id": "b60a42aa-c708-40a0-9d84-de1b60196590"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "name": "hkipo-backend",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "test": "node --test --import tsx ./src/**/*.test.ts",
+    "typecheck": "tsc --noEmit",
+    "cron:local": "wrangler dev --test-scheduled"
+  },
+  "dependencies": {
+    "hono": "^4.12.9"
+  },
+  "devDependencies": {
+    "@types/node": "^24.5.2",
+    "@cloudflare/workers-types": "^4.20260320.0",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3",
+    "wrangler": "^4.79.0"
+  }
+}
