@@ -1,8 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { renderLandingPage } from "./landing";
+import { renderLandingPage } from "../src/landing";
 
-test("renderLandingPage includes service metrics and ipo rows", () => {
+test("renderLandingPage includes the editorial landing structure and ipo data", () => {
   const html = renderLandingPage({
     health: {
       ok: true,
@@ -43,7 +43,11 @@ test("renderLandingPage includes service metrics and ipo rows", () => {
   });
 
   assert.match(html, /HK IPO API/);
+  assert.match(html, /Open the live feed/);
+  assert.match(html, /Market pulse, from the production Worker/);
+  assert.match(html, /Recent IPO feed/);
   assert.match(html, /Example Holdings/);
   assert.match(html, /\/v2\/ipos/);
+  assert.match(html, /Operational/);
   assert.match(html, /Connected/);
 });

@@ -61,4 +61,4 @@ npx wrangler secret put JINA_KEY
 ```
 
 - Create the production D1 database as `hkipo-db-prod`, then update the D1 `database_id` in `wrangler.jsonc`.
-- The Worker is configured to serve the custom domain `api.langtangs.com` directly, with the landing page at `/` and the API under `/v2/...`.
+- The Worker is configured to serve the custom domain `hkipo.langtangs.com` directly, with the landing page at `/` and the API under `/v2/...`.

@@ -1,3 +1,7 @@
+function isMemberLocked(text: string): boolean {
+  return text.includes("会员") || text.includes("setting/member");
+}
+
 export function cleanRequiredText(value: unknown): string {
   if (value === null || value === undefined) {
     return "";
@@ -13,7 +17,7 @@ export function cleanRequiredText(value: unknown): string {
 
 export function cleanOptionalText(value: unknown): string | null {
   const text = cleanRequiredText(value);
-  if (!text || text.includes("会员")) {
+  if (!text || isMemberLocked(text)) {
     return null;
   }
   return text;

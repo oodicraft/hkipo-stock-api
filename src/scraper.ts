@@ -1,4 +1,5 @@
-import { normalizeChinaDate, inferIPOStatus } from "./date";
+import { cleanOptionalText, cleanRequiredText, joinOptionalText } from "./cleaning";
+import { currentChinaDate, inferRecordYearContext, inferIPOStatus, normalizeChinaDate } from "./date";
 import type { Env, ScrapedIPORecord } from "./types";
 
 const JINA_URL = "https://r.jina.ai/https://www.jisilu.cn/data/new_stock/hkipo/";
@@ -7,19 +8,6 @@ interface JinaPayload {
   rows?: Array<{
     cell?: Record<string, unknown>;
   }>;
-}
-
-function cleanText(value: unknown): string {
-  if (value === null || value === undefined) {
-    return "";
-  }
-
-  const text = String(value).trim();
-  if (text === "None") {
-    return "";
-  }
-
-  return text;
 }
 
 function extractPayload(markdown: string): JinaPayload {
@@ -56,34 +44,35 @@ export async function fetchAndParseIPOData(env: Env): Promise<ScrapedIPORecord[]
   return rows
     .map((row) => row.cell ?? {})
     .map((cell): ScrapedIPORecord => {
-      const subStart = normalizeChinaDate(cleanText(cell.apply_dt));
-      const subEnd = normalizeChinaDate(cleanText(cell.apply_end_dt));
-      const listDate = normalizeChinaDate(cleanText(cell.list_dt));
+      const yearContext = inferRecordYearContext(cleanRequiredText(cell.apply_dt));
+      const subStart = normalizeChinaDate(cleanRequiredText(cell.apply_dt), new Date(), yearContext);
+      const subEnd = normalizeChinaDate(cleanRequiredText(cell.apply_end_dt), new Date(), yearContext);
+      const listDate = normalizeChinaDate(cleanRequiredText(cell.list_dt), new Date(), yearContext);
 
       return {
-        code: cleanText(cell.stock_cd),
-        name: cleanText(cell.stock_nm),
-        board: cleanText(cell.market),
+        code: cleanRequiredText(cell.stock_cd),
+        name: cleanRequiredText(cell.stock_nm),
+        board: cleanRequiredText(cell.market),
         subStart,
         subEnd,
         listDate,
-        status: inferIPOStatus({ subStart, listDate }),
-        priceRange: cleanText(cell.price_range),
-        lotAmount: cleanText(cell.single_draw_money),
-        lotWinRate: cleanText(cell.lucky_draw_rt),
-        issuePrice: cleanText(cell.issue_price),
-        issuePERatio: cleanText(cell.issue_pe_range),
-        greenshoePublicOffer: `${cleanText(cell.green_rt)} ${cleanText(cell.green_amount)}`.trim(),
-        comparableCompanies: cleanText(cell.ref_company),
-        overSubMultiple: cleanText(cell.above_rt),
-        totalFundRaising: cleanText(cell.raise_money),
-        issueMarketCap: cleanText(cell.total_values),
-        livermoreDarkPool: cleanText(cell.gray_incr_rt),
-        futuDarkPool: cleanText(cell.gray_incr_rt2),
-        firstDayChange: cleanText(cell.first_incr_rt),
-        totalChange: cleanText(cell.total_incr_rt),
-        underwriter: cleanText(cell.underwriter),
-        prospectusUrl: cleanText(cell.prospectus)
+        status: inferIPOStatus({ subStart, listDate }, currentChinaDate()),
+        priceRange: cleanOptionalText(cell.price_range),
+        lotAmount: cleanOptionalText(cell.single_draw_money),
+        lotWinRate: cleanOptionalText(cell.lucky_draw_rt),
+        issuePrice: cleanOptionalText(cell.issue_price),
+        issuePERatio: cleanOptionalText(cell.issue_pe_range),
+        greenshoePublicOffer: joinOptionalText(cell.green_rt, cell.green_amount),
+        comparableCompanies: cleanOptionalText(cell.ref_company),
+        overSubMultiple: cleanOptionalText(cell.above_rt),
+        totalFundRaising: cleanOptionalText(cell.raise_money),
+        issueMarketCap: cleanOptionalText(cell.total_values),
+        livermoreDarkPool: cleanOptionalText(cell.gray_incr_rt),
+        futuDarkPool: cleanOptionalText(cell.gray_incr_rt2),
+        firstDayChange: cleanOptionalText(cell.first_incr_rt),
+        totalChange: cleanOptionalText(cell.total_incr_rt),
+        underwriter: cleanOptionalText(cell.underwriter),
+        prospectusUrl: cleanOptionalText(cell.prospectus)
       };
     })
     .filter((record) => record.code.length > 0 && record.name.length > 0);

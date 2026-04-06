@@ -1,12 +1,10 @@
 {
   "name": "hkipo-backend",
-  "version": "1.0.0",
-  "private": true,
   "type": "module",
   "scripts": {
     "dev": "wrangler dev",
-    "deploy": "wrangler deploy",
-    "test": "node --test --import tsx ./src/**/*.test.ts",
+    "deploy": "wrangler deploy --minify",
+    "test": "node --test --import tsx ./test/**/*.test.ts",
     "typecheck": "tsc --noEmit",
     "cron:local": "wrangler dev --test-scheduled"
   },
