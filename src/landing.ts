@@ -1,3 +1,4 @@
+import landingContent from "./content.json" with { type: "json" };
 import type { IPOListItem, IPOStats, ServiceHealth } from "./types";
 
 interface LandingPageData {
@@ -5,6 +6,125 @@ interface LandingPageData {
   stats: IPOStats;
   latestItems: IPOListItem[];
 }
+
+type InlineTextPart = {
+  type: "text" | "code";
+  value: string;
+};
+
+type CountKey = keyof IPOStats["counts"];
+
+interface LandingContent {
+  meta: {
+    lang: string;
+    title: string;
+    description: string;
+  };
+  siteHeader: {
+    brand: string;
+    tagline: string;
+    primaryCta: {
+      href: string;
+      label: string;
+    };
+  };
+  hero: {
+    kicker: string;
+    title: string;
+    copy: InlineTextPart[];
+  };
+  valueCards: Array<{
+    title: string;
+    copy: InlineTextPart[];
+  }>;
+  marketPulse: {
+    title: string;
+    description: string;
+    cards: {
+      workerStatus: {
+        label: string;
+        servicePrefix: string;
+      };
+      database: {
+        label: string;
+        copy: string;
+      };
+      latestSync: {
+        label: string;
+      };
+      runSummary: {
+        label: string;
+        rowsSuffix: string;
+      };
+    };
+  };
+  endpoints: {
+    title: string;
+    description: string;
+    label: string;
+    items: Array<{
+      href: string;
+      path: string;
+      copy: string;
+    }>;
+  };
+  recentFeed: {
+    title: string;
+    description: string;
+    totals: Array<{
+      key: CountKey;
+      label: string;
+    }>;
+    emptyState: string;
+  };
+  itemRow: {
+    codePrefix: string;
+    statusLabels: {
+      open: string;
+      listed: string;
+      upcoming: string;
+    };
+    facts: {
+      subscribe: string;
+      list: string;
+      lot: string;
+      price: string;
+      docs: string;
+    };
+    fallbacks: {
+      value: string;
+      board: string;
+      empty: string;
+      prospectusUnavailable: string;
+    };
+    prospectusLinkLabel: string;
+  };
+  status: {
+    health: {
+      operational: string;
+      degraded: string;
+    };
+    database: {
+      connected: string;
+      disconnected: string;
+    };
+    syncFallbacks: {
+      status: string;
+      time: string;
+      summary: string;
+    };
+    syncSummary: {
+      rows: string;
+      inserted: string;
+      updated: string;
+    };
+  };
+  footer: {
+    copy: InlineTextPart[];
+  };
+}
+
+const content = landingContent as LandingContent;
 
 function escapeHtml(value: string): string {
   return value
@@ -15,18 +135,18 @@ function escapeHtml(value: string): string {
     .replaceAll("'", "&#39;");
 }
 
-function formatValue(value: string | null, fallback = "TBD"): string {
-  return value && value.trim().length > 0 ? escapeHtml(value) : fallback;
+function formatValue(value: string | null, fallback = content.itemRow.fallbacks.value): string {
+  return value && value.trim().length > 0 ? escapeHtml(value) : escapeHtml(fallback);
 }
 
 function statusLabel(status: IPOListItem["status"]): string {
   if (status === "open") {
-    return "Open";
+    return content.itemRow.statusLabels.open;
   }
   if (status === "listed") {
-    return "Listed";
+    return content.itemRow.statusLabels.listed;
   }
-  return "Upcoming";
+  return content.itemRow.statusLabels.upcoming;
 }
 
 function statusClass(status: IPOListItem["status"]): string {
@@ -41,37 +161,37 @@ function statusClass(status: IPOListItem["status"]): string {
 
 function renderItemRow(item: IPOListItem): string {
   const prospectus = item.prospectusUrl
-    ? `<a class="prospectus-link" href="${escapeHtml(item.prospectusUrl)}" target="_blank" rel="noreferrer">Open prospectus</a>`
-    : '<span class="muted">Unavailable</span>';
+    ? `<a class="prospectus-link" href="${escapeHtml(item.prospectusUrl)}" target="_blank" rel="noreferrer">${escapeHtml(content.itemRow.prospectusLinkLabel)}</a>`
+    : `<span class="muted">${escapeHtml(content.itemRow.fallbacks.prospectusUnavailable)}</span>`;
 
   return `
     <article class="ipo-row">
       <div class="ipo-row-head">
         <div class="ipo-title-group">
           <h3>${escapeHtml(item.name)}</h3>
-          <p class="ipo-meta">HK ${escapeHtml(item.code)} · ${formatValue(item.board, "Main Board")}</p>
+          <p class="ipo-meta">${escapeHtml(content.itemRow.codePrefix)}${escapeHtml(item.code)} · ${formatValue(item.board, content.itemRow.fallbacks.board)}</p>
         </div>
-        <span class="status-pill ${statusClass(item.status)}">${statusLabel(item.status)}</span>
+        <span class="status-pill ${statusClass(item.status)}">${escapeHtml(statusLabel(item.status))}</span>
       </div>
       <dl class="ipo-facts">
         <div>
-          <dt>Subscribe</dt>
-          <dd>${formatValue(item.subStart)} → ${formatValue(item.subEnd)}</dd>
+          <dt>${escapeHtml(content.itemRow.facts.subscribe)}</dt>
+          <dd>${formatValue(item.subStart, content.itemRow.fallbacks.value)} → ${formatValue(item.subEnd, content.itemRow.fallbacks.value)}</dd>
         </div>
         <div>
-          <dt>List</dt>
-          <dd>${formatValue(item.listDate)}</dd>
+          <dt>${escapeHtml(content.itemRow.facts.list)}</dt>
+          <dd>${formatValue(item.listDate, content.itemRow.fallbacks.value)}</dd>
         </div>
         <div>
-          <dt>Lot</dt>
-          <dd>${formatValue(item.lotAmount, "--")}</dd>
+          <dt>${escapeHtml(content.itemRow.facts.lot)}</dt>
+          <dd>${formatValue(item.lotAmount, content.itemRow.fallbacks.empty)}</dd>
         </div>
         <div>
-          <dt>Price</dt>
-          <dd>${formatValue(item.priceRange, "--")}</dd>
+          <dt>${escapeHtml(content.itemRow.facts.price)}</dt>
+          <dd>${formatValue(item.priceRange, content.itemRow.fallbacks.empty)}</dd>
         </div>
         <div>
-          <dt>Docs</dt>
+          <dt>${escapeHtml(content.itemRow.facts.docs)}</dt>
           <dd>${prospectus}</dd>
         </div>
       </dl>
@@ -79,30 +199,79 @@ function renderItemRow(item: IPOListItem): string {
   `;
 }
 
+function renderInlineText(parts: InlineTextPart[]): string {
+  return parts
+    .map((part) => (part.type === "code" ? `<code>${escapeHtml(part.value)}</code>` : escapeHtml(part.value)))
+    .join("");
+}
+
+function renderValueCards(): string {
+  return content.valueCards
+    .map(
+      (card) => `
+            <article class="value-card">
+              <h2>${escapeHtml(card.title)}</h2>
+              <p>${renderInlineText(card.copy)}</p>
+            </article>
+          `
+    )
+    .join("");
+}
+
+function renderEndpointRows(): string {
+  return content.endpoints.items
+    .map(
+      (item) => `
+              <a class="endpoint-row" href="${escapeHtml(item.href)}">
+                <div>
+                  <span class="endpoint-label">${escapeHtml(content.endpoints.label)}</span>
+                  <div class="endpoint-path">${escapeHtml(item.path)}</div>
+                </div>
+                <div class="endpoint-copy">${escapeHtml(item.copy)}</div>
+              </a>
+            `
+    )
+    .join("");
+}
+
+function renderTotals(stats: IPOStats): string {
+  return content.recentFeed.totals
+    .map(
+      (total) => `
+              <article class="total-card">
+                <span>${escapeHtml(total.label)}</span>
+                <strong>${stats.counts[total.key]}</strong>
+              </article>
+            `
+    )
+    .join("");
+}
+
 export function renderLandingPage(data: LandingPageData): string {
   const latestSync = data.stats.latestSync;
-  const latestSyncStatus = latestSync ? escapeHtml(latestSync.status) : "waiting";
-  const latestSyncTime = latestSync?.finishedAt ?? latestSync?.startedAt ?? "Not synced yet";
+  const latestSyncStatus = latestSync ? latestSync.status : content.status.syncFallbacks.status;
+  const latestSyncTime = latestSync?.finishedAt ?? latestSync?.startedAt ?? content.status.syncFallbacks.time;
   const latestSyncSummary = latestSync
-    ? `${latestSync.totalCount} rows · ${latestSync.insertedCount} inserted · ${latestSync.updatedCount} updated`
-    : "The first scheduled sync has not completed yet.";
-  const healthStatus = data.health.ok ? "Operational" : "Degraded";
-  const databaseStatus = data.health.database === "connected" ? "Connected" : "Disconnected";
+    ? `${latestSync.totalCount}${content.status.syncSummary.rows} · ${latestSync.insertedCount}${content.status.syncSummary.inserted} · ${latestSync.updatedCount}${content.status.syncSummary.updated}`
+    : content.status.syncFallbacks.summary;
+  const healthStatus = data.health.ok ? content.status.health.operational : content.status.health.degraded;
+  const databaseStatus =
+    data.health.database === "connected" ? content.status.database.connected : content.status.database.disconnected;
 
   const itemsMarkup =
     data.latestItems.length > 0
       ? data.latestItems.map(renderItemRow).join("")
-      : '<div class="empty-state">No IPO records are available in D1 yet. The first cron sync will populate this view.</div>';
+      : `<div class="empty-state">${escapeHtml(content.recentFeed.emptyState)}</div>`;
 
   return `<!doctype html>
-<html lang="en">
+<html lang="${escapeHtml(content.meta.lang)}">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>HK IPO API</title>
+    <title>${escapeHtml(content.meta.title)}</title>
     <meta
       name="description"
-      content="HK IPO API serves Hong Kong IPO market data through a stable Cloudflare Worker and D1-backed /v2 endpoints."
+      content="${escapeHtml(content.meta.description)}"
     />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -553,62 +722,48 @@ export function renderLandingPage(data: LandingPageData): string {
       <div class="frame">
         <header class="site-header">
           <div class="site-title-wrap">
-            <a class="brand" href="/">HK IPO API</a>
-            <p class="site-tagline">Hong Kong IPO data for the SwiftUI client and every downstream tool.</p>
+            <a class="brand" href="/">${escapeHtml(content.siteHeader.brand)}</a>
+            <p class="site-tagline">${escapeHtml(content.siteHeader.tagline)}</p>
           </div>
-          <a class="primary-cta" href="/v2/ipos?limit=10">Open the live feed</a>
+          <a class="primary-cta" href="${escapeHtml(content.siteHeader.primaryCta.href)}">${escapeHtml(content.siteHeader.primaryCta.label)}</a>
         </header>
 
         <main>
           <section class="hero section">
-            <p class="hero-kicker">Cloudflare Worker · Hono · D1</p>
-            <h1>Live market-ready IPO data.</h1>
-            <p class="hero-copy">
-              This service runs on Hono + Wrangler + D1, refreshes from Jina on a daily Cloudflare cron,
-              and exposes the current Hong Kong IPO feed through a stable <code>/v2</code> API.
-            </p>
+            <p class="hero-kicker">${escapeHtml(content.hero.kicker)}</p>
+            <h1>${escapeHtml(content.hero.title)}</h1>
+            <p class="hero-copy">${renderInlineText(content.hero.copy)}</p>
           </section>
 
           <section class="value-grid">
-            <article class="value-card">
-              <h2>Fresh every day.</h2>
-              <p>Subscription windows, listing dates, lot sizes, and price ranges are refreshed into the same production Worker that powers the app.</p>
-            </article>
-            <article class="value-card">
-              <h2>One stable surface.</h2>
-              <p>The root domain serves health checks, IPO lists, and per-code detail routes from a single <code>/v2</code> namespace.</p>
-            </article>
-            <article class="value-card">
-              <h2>Built for reuse.</h2>
-              <p>Use the feed in SwiftUI, internal tools, or lightweight automations without rebuilding the data pipeline for each client.</p>
-            </article>
+            ${renderValueCards()}
           </section>
 
           <section class="section">
             <div class="section-intro">
-              <h2>Market pulse, from the production Worker.</h2>
-              <p>The same D1-backed service health and sync state shown here are what the production clients see when they call into the API.</p>
+              <h2>${escapeHtml(content.marketPulse.title)}</h2>
+              <p>${escapeHtml(content.marketPulse.description)}</p>
             </div>
 
             <div class="pulse-grid">
               <article class="pulse-card">
-                <span class="metric-label">Worker Status</span>
+                <span class="metric-label">${escapeHtml(content.marketPulse.cards.workerStatus.label)}</span>
                 <strong class="metric-value">${healthStatus}</strong>
-                <p class="metric-copy">Service: ${escapeHtml(data.health.service)}</p>
+                <p class="metric-copy">${escapeHtml(content.marketPulse.cards.workerStatus.servicePrefix)}${escapeHtml(data.health.service)}</p>
               </article>
               <article class="pulse-card">
-                <span class="metric-label">D1 Connectivity</span>
+                <span class="metric-label">${escapeHtml(content.marketPulse.cards.database.label)}</span>
                 <strong class="metric-value">${databaseStatus}</strong>
-                <p class="metric-copy">Reads are served directly from the production D1 dataset.</p>
+                <p class="metric-copy">${escapeHtml(content.marketPulse.cards.database.copy)}</p>
               </article>
               <article class="pulse-card">
-                <span class="metric-label">Latest Sync</span>
+                <span class="metric-label">${escapeHtml(content.marketPulse.cards.latestSync.label)}</span>
                 <strong class="metric-value">${escapeHtml(latestSyncStatus)}</strong>
                 <p class="metric-copy">${escapeHtml(latestSyncTime)}</p>
               </article>
               <article class="pulse-card">
-                <span class="metric-label">Run Summary</span>
-                <strong class="metric-value">${latestSync ? String(latestSync.totalCount) : "0"} rows</strong>
+                <span class="metric-label">${escapeHtml(content.marketPulse.cards.runSummary.label)}</span>
+                <strong class="metric-value">${latestSync ? String(latestSync.totalCount) : "0"}${escapeHtml(content.marketPulse.cards.runSummary.rowsSuffix)}</strong>
                 <p class="metric-copy">${escapeHtml(latestSyncSummary)}</p>
               </article>
             </div>
@@ -616,61 +771,23 @@ export function renderLandingPage(data: LandingPageData): string {
 
           <section class="section">
             <div class="section-intro">
-              <h2>Explore the production API.</h2>
-              <p>Everything below stays under the same custom domain and mirrors the routes used by the app and any downstream integrations.</p>
+              <h2>${escapeHtml(content.endpoints.title)}</h2>
+              <p>${escapeHtml(content.endpoints.description)}</p>
             </div>
 
             <div class="endpoint-list">
-              <a class="endpoint-row" href="/v2/health">
-                <div>
-                  <span class="endpoint-label">Endpoint</span>
-                  <div class="endpoint-path">/v2/health</div>
-                </div>
-                <div class="endpoint-copy">Service and D1 health in one lightweight response.</div>
-              </a>
-              <a class="endpoint-row" href="/v2/ipos?limit=10">
-                <div>
-                  <span class="endpoint-label">Endpoint</span>
-                  <div class="endpoint-path">/v2/ipos</div>
-                </div>
-                <div class="endpoint-copy">Filterable IPO records for timelines, dashboards, and app views.</div>
-              </a>
-              <a class="endpoint-row" href="/v2/ipos/stats">
-                <div>
-                  <span class="endpoint-label">Endpoint</span>
-                  <div class="endpoint-path">/v2/ipos/stats</div>
-                </div>
-                <div class="endpoint-copy">Market counts plus the latest sync summary from the ingest pipeline.</div>
-              </a>
-              <a class="endpoint-row" href="/v2/ipos/02506">
-                <div>
-                  <span class="endpoint-label">Endpoint</span>
-                  <div class="endpoint-path">/v2/ipos/:code</div>
-                </div>
-                <div class="endpoint-copy">Single IPO detail for on-demand drill-downs or focused app screens.</div>
-              </a>
+              ${renderEndpointRows()}
             </div>
           </section>
 
           <section class="section">
             <div class="section-intro">
-              <h2>Recent IPO feed.</h2>
-              <p>The latest ten IPO records below are served from the same D1 tables used by the SwiftUI app.</p>
+              <h2>${escapeHtml(content.recentFeed.title)}</h2>
+              <p>${escapeHtml(content.recentFeed.description)}</p>
             </div>
 
             <div class="totals-grid">
-              <article class="total-card">
-                <span>Upcoming</span>
-                <strong>${data.stats.counts.upcoming}</strong>
-              </article>
-              <article class="total-card">
-                <span>Open</span>
-                <strong>${data.stats.counts.open}</strong>
-              </article>
-              <article class="total-card">
-                <span>Listed</span>
-                <strong>${data.stats.counts.listed}</strong>
-              </article>
+              ${renderTotals(data.stats)}
             </div>
 
             <div class="ipo-list">
@@ -680,7 +797,7 @@ export function renderLandingPage(data: LandingPageData): string {
         </main>
 
         <footer class="site-footer">
-          HK IPO API is deployed on Cloudflare and exposes the production market feed through a stable, machine-readable <code>/v2</code> surface.
+          ${renderInlineText(content.footer.copy)}
         </footer>
       </div>
     </div>

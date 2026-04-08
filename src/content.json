@@ -1,0 +1,195 @@
+{
+  "meta": {
+    "lang": "en",
+    "title": "HKIPO Stock api",
+    "description": "HKIPO Stock api provides Hong Kong IPO data through public /v2 endpoints."
+  },
+  "siteHeader": {
+    "brand": "HKIPO Stock api",
+    "tagline": "Public Hong Kong IPO data.",
+    "primaryCta": {
+      "href": "/v2/ipos?limit=10",
+      "label": "Open /v2 feed"
+    }
+  },
+  "hero": {
+    "kicker": "Cloudflare Worker · Hono · D1",
+    "title": "Hong Kong IPO data.",
+    "copy": [
+      {
+        "type": "text",
+        "value": "Read the latest IPO feed from a Cloudflare-backed "
+      },
+      {
+        "type": "code",
+        "value": "/v2"
+      },
+      {
+        "type": "text",
+        "value": " API."
+      }
+    ]
+  },
+  "valueCards": [
+    {
+      "title": "Fresh data.",
+      "copy": [
+        {
+          "type": "text",
+          "value": "Daily sync for dates, prices, and lot sizes."
+        }
+      ]
+    },
+    {
+      "title": "Public endpoints.",
+      "copy": [
+        {
+          "type": "text",
+          "value": "Health, list, stats, and detail routes live under "
+        },
+        {
+          "type": "code",
+          "value": "/v2"
+        },
+        {
+          "type": "text",
+          "value": " namespace."
+        }
+      ]
+    },
+    {
+      "title": "Built to reuse.",
+      "copy": [
+        {
+          "type": "text",
+          "value": "Use it in apps, scripts, and dashboards."
+        }
+      ]
+    }
+  ],
+  "marketPulse": {
+    "title": "Live service status.",
+    "description": "Current Worker health and sync summary.",
+    "cards": {
+      "workerStatus": {
+        "label": "Worker",
+        "servicePrefix": "Service: "
+      },
+      "database": {
+        "label": "D1",
+        "copy": "Reads come from the live D1 dataset."
+      },
+      "latestSync": {
+        "label": "Latest Sync"
+      },
+      "runSummary": {
+        "label": "Run Summary",
+        "rowsSuffix": " rows"
+      }
+    }
+  },
+  "endpoints": {
+    "title": "Core endpoints.",
+    "description": "A small read-only surface for health checks and IPO data.",
+    "label": "Endpoint",
+    "items": [
+      {
+        "href": "/v2/health",
+        "path": "/v2/health",
+        "copy": "Worker and D1 status."
+      },
+      {
+        "href": "/v2/ipos?limit=10",
+        "path": "/v2/ipos",
+        "copy": "Filterable IPO records."
+      },
+      {
+        "href": "/v2/ipos/stats",
+        "path": "/v2/ipos/stats",
+        "copy": "Counts and latest sync."
+      },
+      {
+        "href": "/v2/ipos/02729",
+        "path": "/v2/ipos/:code",
+        "copy": "Single IPO detail."
+      }
+    ]
+  },
+  "recentFeed": {
+    "title": "Latest IPOs.",
+    "description": "Recent records from the live dataset.",
+    "totals": [
+      {
+        "key": "upcoming",
+        "label": "Upcoming"
+      },
+      {
+        "key": "open",
+        "label": "Open"
+      },
+      {
+        "key": "listed",
+        "label": "Listed"
+      }
+    ],
+    "emptyState": "No IPO records yet. The first sync will populate this view."
+  },
+  "itemRow": {
+    "codePrefix": "HK ",
+    "statusLabels": {
+      "open": "Open",
+      "listed": "Listed",
+      "upcoming": "Upcoming"
+    },
+    "facts": {
+      "subscribe": "Subscribe",
+      "list": "List",
+      "lot": "Lot",
+      "price": "Price",
+      "docs": "Docs"
+    },
+    "fallbacks": {
+      "value": "TBD",
+      "board": "Main Board",
+      "empty": "--",
+      "prospectusUnavailable": "Unavailable"
+    },
+    "prospectusLinkLabel": "Open prospectus"
+  },
+  "status": {
+    "health": {
+      "operational": "Operational",
+      "degraded": "Degraded"
+    },
+    "database": {
+      "connected": "Connected",
+      "disconnected": "Disconnected"
+    },
+    "syncFallbacks": {
+      "status": "waiting",
+      "time": "Not synced yet",
+      "summary": "The first sync has not completed yet."
+    },
+    "syncSummary": {
+      "rows": " rows",
+      "inserted": " inserted",
+      "updated": " updated"
+    }
+  },
+  "footer": {
+    "copy": [
+      {
+        "type": "text",
+        "value": "HKIPO Stock api serves the public IPO feed at "
+      },
+      {
+        "type": "code",
+        "value": "/v2"
+      },
+      {
+        "type": "text",
+        "value": "."
+      }
+    ]
+  }
+}

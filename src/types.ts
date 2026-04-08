@@ -72,6 +72,8 @@ export interface SyncSummary {
   errorMessage: string | null;
 }
 
+export type PublicSyncSummary = Omit<SyncSummary, "errorMessage">;
+
 export interface IPOCounts {
   upcoming: number;
   open: number;
@@ -81,6 +83,11 @@ export interface IPOCounts {
 export interface IPOStats {
   counts: IPOCounts;
   latestSync: SyncSummary | null;
+}
+
+export interface PublicIPOStats {
+  counts: IPOCounts;
+  latestSync: PublicSyncSummary | null;
 }
 
 export interface ServiceHealth {

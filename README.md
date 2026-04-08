@@ -1,10 +1,10 @@
-# HK IPO Backend
+# HKIPO Stock api
 
-Cloudflare Worker + Hono + D1 backend for HK IPO data.
+Cloudflare Worker + Hono + D1 backend for public Hong Kong IPO data.
 
 ## What It Does
 
-- Serves a landing page at `/` with live service status and the latest 10 IPO rows
+- Serves a landing page at `/` with service status and the latest 10 IPO rows
 - Exposes read-only APIs under `/v2/...`
 - Runs a daily Cloudflare `scheduled` task to fetch and normalize IPO data from Jina
 - Stores the latest records in `ipo_current`
@@ -26,19 +26,38 @@ Cloudflare Worker + Hono + D1 backend for HK IPO data.
 npm install
 ```
 
-2. Apply local D1 migrations:
+2. Create your local Wrangler config from the template:
+
+```bash
+cp wrangler.example.jsonc wrangler.jsonc
+```
+
+3. Edit `wrangler.jsonc` and fill in your own values:
+
+- Set `name`
+- Set `workers_dev` or `routes`
+- Set `d1_databases[].database_name`
+- Set `d1_databases[].database_id`
+
+4. Create local secrets in `.dev.vars` and keep the file untracked:
+
+```bash
+cp .dev.vars.example .dev.vars
+```
+
+5. Apply local D1 migrations:
 
 ```bash
 npx wrangler d1 migrations apply HKIPO_DB --local
 ```
 
-3. Start local development server:
+6. Start local development server:
 
 ```bash
 npm run dev
 ```
 
-4. Trigger the scheduled sync locally:
+7. Trigger the scheduled sync locally:
 
 ```bash
 npm run cron:local
@@ -60,5 +79,6 @@ npm run cron:local
 npx wrangler secret put JINA_KEY
 ```
 
-- Create the production D1 database as `hkipo-db-prod`, then update the D1 `database_id` in `wrangler.jsonc`.
-- The Worker is configured to serve the custom domain `hkipo.langtangs.com` directly, with the landing page at `/` and the API under `/v2/...`.
+- `wrangler.jsonc` is local-only and ignored by git.
+- Start from `wrangler.example.jsonc`, then copy it to `wrangler.jsonc` and fill in your real Worker, route, and D1 values.
+- Keep `.dev.vars`, `.env`, and any real secrets out of the repository.

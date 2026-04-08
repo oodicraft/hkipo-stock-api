@@ -6,7 +6,7 @@ test("renderLandingPage includes the editorial landing structure and ipo data", 
   const html = renderLandingPage({
     health: {
       ok: true,
-      service: "hkipo-backend",
+      service: "hkipo-stock-api",
       database: "connected"
     },
     stats: {
@@ -28,7 +28,7 @@ test("renderLandingPage includes the editorial landing structure and ipo data", 
     },
     latestItems: [
       {
-        code: "02506",
+        code: "02729",
         name: "Example Holdings",
         subStart: "2026-04-08",
         subEnd: "2026-04-10",
@@ -42,10 +42,10 @@ test("renderLandingPage includes the editorial landing structure and ipo data", 
     ]
   });
 
-  assert.match(html, /HK IPO API/);
-  assert.match(html, /Open the live feed/);
-  assert.match(html, /Market pulse, from the production Worker/);
-  assert.match(html, /Recent IPO feed/);
+  assert.match(html, /HKIPO Stock api/);
+  assert.match(html, /Open \/v2 feed/);
+  assert.match(html, /Live service status/);
+  assert.match(html, /Latest IPOs/);
   assert.match(html, /Example Holdings/);
   assert.match(html, /\/v2\/ipos/);
   assert.match(html, /Operational/);

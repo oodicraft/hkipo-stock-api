@@ -350,7 +350,7 @@ export async function getServiceHealth(env: Env): Promise<ServiceHealth> {
   const result = await env.HKIPO_DB.prepare("SELECT 1 AS ok").first<{ ok: number }>();
   return {
     ok: result?.ok === 1,
-    service: "hkipo-backend",
+    service: "hkipo-stock-api",
     database: result?.ok === 1 ? "connected" : "disconnected"
   };
 }

@@ -1,21 +1,21 @@
 {
-  "name": "hkipo-backend",
+  "name": "hkipo-stock-api",
   "type": "module",
   "scripts": {
-    "dev": "wrangler dev",
+    "dev": "wrangler dev --remote",
     "deploy": "wrangler deploy --minify",
     "test": "node --test --import tsx ./test/**/*.test.ts",
     "typecheck": "tsc --noEmit",
     "cron:local": "wrangler dev --test-scheduled"
   },
   "dependencies": {
-    "hono": "^4.12.9"
+    "hono": "^4.12.12"
   },
   "devDependencies": {
     "@types/node": "^24.5.2",
     "@cloudflare/workers-types": "^4.20260320.0",
     "tsx": "^4.20.6",
     "typescript": "^5.9.3",
-    "wrangler": "^4.79.0"
+    "wrangler": "^4.81.0"
   }
 }
