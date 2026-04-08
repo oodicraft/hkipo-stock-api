@@ -2,6 +2,8 @@
 
 Cloudflare Worker + Hono + D1 backend for Hong Kong IPO data.
 
+![Project screenshot](./screenshot.jpg)
+
 ## What It Does
 
 - Serves a landing page at `/` with service status and the latest 10 IPO rows
@@ -59,4 +61,5 @@ npm run dev
 ```bash
 npx wrangler secret put JINA_KEY
 ```
+
 
