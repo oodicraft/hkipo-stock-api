@@ -1,7 +1,6 @@
 # Node / Wrangler
 node_modules/
 .wrangler/
-wrangler.jsonc
 .dev.vars
 .dev.vars.*
 !.dev.vars.example
