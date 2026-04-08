@@ -8,7 +8,7 @@ Cloudflare Worker + Hono + D1 backend for Hong Kong IPO data.
 
 - Serves a landing page at `/` with service status and the latest 10 IPO rows
 - Exposes read-only APIs under `/v2/...`
-- Runs a daily Cloudflare `scheduled` task to fetch and normalize IPO data from Jina
+- Runs a daily Cloudflare `scheduled` task at 09:00 GMT+8 (01:00 UTC) to fetch and normalize IPO data from Jina
 
 
 ## Stack
@@ -61,5 +61,4 @@ npm run dev
 ```bash
 npx wrangler secret put JINA_KEY
 ```
-
 

@@ -15,7 +15,7 @@
   ],
   "triggers": {
     "crons": [
-      "17 11 * * *"
+      "0 1 * * *"
     ]
   },
   "d1_databases": [
