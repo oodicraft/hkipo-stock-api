@@ -43,7 +43,11 @@ test("renderLandingPage includes the editorial landing structure and ipo data", 
   });
 
   assert.match(html, /HKIPO Stock api/);
-  assert.match(html, /Open \/v2 feed/);
+  assert.match(html, /Download macOS app/);
+  assert.match(html, /\/downloads\/hkipo-macos-latest/);
+  assert.match(html, /Native macOS with hkipo api/);
+  assert.match(html, /Keep your Hong Kong IPO subscriptions in view from the menu bar/);
+  assert.match(html, /\/screenshot-macos\.jpg/);
   assert.match(html, /Live service status/);
   assert.match(html, /Latest IPOs/);
   assert.match(html, /Example Holdings/);

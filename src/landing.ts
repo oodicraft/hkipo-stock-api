@@ -38,6 +38,11 @@ interface LandingContent {
     title: string;
     copy: InlineTextPart[];
   }>;
+  macApp: {
+    title: string;
+    description: string;
+    imageAlt: string;
+  };
   marketPulse: {
     title: string;
     description: string;
@@ -458,6 +463,37 @@ export function renderLandingPage(data: LandingPageData): string {
         border-top: 0.5px solid var(--border);
       }
 
+      .mac-app-showcase {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      .mac-app-copy {
+        max-width: 42rem;
+      }
+
+      .mac-app-copy p {
+        margin: 0;
+        color: var(--foreground-soft);
+        font-size: 1.02rem;
+        line-height: 1.7;
+      }
+
+      .mac-app-image-wrap {
+        overflow: hidden;
+        border: 0.5px solid var(--border);
+        border-radius: 24px;
+        background: var(--background-secondary);
+        box-shadow: 0 18px 36px rgba(26, 24, 21, 0.08);
+      }
+
+      .mac-app-image {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+
       .section-intro {
         margin-bottom: 22px;
       }
@@ -739,6 +775,26 @@ export function renderLandingPage(data: LandingPageData): string {
 
           <section class="value-grid">
             ${renderValueCards()}
+          </section>
+
+          <section class="section">
+            <div class="section-intro">
+              <h2>${escapeHtml(content.macApp.title)}</h2>
+            </div>
+
+            <div class="mac-app-showcase">
+              <div class="mac-app-copy">
+                <p>${escapeHtml(content.macApp.description)}</p>
+              </div>
+              <div class="mac-app-image-wrap">
+                <img
+                  class="mac-app-image"
+                  src="/screenshot-macos.jpg"
+                  alt="${escapeHtml(content.macApp.imageAlt)}"
+                  loading="lazy"
+                />
+              </div>
+            </div>
           </section>
 
           <section class="section">

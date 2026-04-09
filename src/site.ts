@@ -129,6 +129,7 @@ export function getAppUpdate(params: {
   channel: string;
   currentVersion: string;
   currentBuild: number;
+  origin: string;
 }): AppUpdateResponse {
   const platformMatches = params.platform === release.platform;
   const channelMatches = params.channel === release.channel;
@@ -139,8 +140,8 @@ export function getAppUpdate(params: {
     updateAvailable: platformMatches && channelMatches && (newerVersion || newerBuild),
     latestVersion: release.latestVersion,
     latestBuild: release.latestBuild,
-    downloadUrl: DOWNLOAD_LATEST_PATH,
-    releaseNotesUrl: RELEASE_NOTES_PATH,
+    downloadUrl: new URL(DOWNLOAD_LATEST_PATH, params.origin).toString(),
+    releaseNotesUrl: new URL(RELEASE_NOTES_PATH, params.origin).toString(),
     publishedAt: release.publishedAt,
     notes: release.notes
   };

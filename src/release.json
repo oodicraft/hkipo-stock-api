@@ -3,7 +3,7 @@
   "channel": "direct",
   "latestVersion": "2.2.0",
   "latestBuild": 7,
-  "downloadUrl": "https://hkipo.langtangs.com/downloads/hkipo-macos-latest.dmg",
+  "downloadUrl": "https://hkipo.langtangs.com/downloads/HK-IPO-macOS.dmg",
   "publishedAt": "2026-04-09T12:00:00+08:00",
   "notes": "修复时区一致性，调整通知授权触发时机，并增加官网版手动检查更新链路。",
   "releaseNotes": [

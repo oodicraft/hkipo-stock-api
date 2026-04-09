@@ -114,7 +114,8 @@ test("GET /v2/app/update returns direct channel release metadata", async () => {
   assert.equal(body.updateAvailable, true);
   assert.equal(body.latestVersion, "2.2.0");
   assert.equal(body.latestBuild, 7);
-  assert.equal(body.downloadUrl, "/downloads/hkipo-macos-latest");
+  assert.equal(body.downloadUrl, "https://localhost/downloads/hkipo-macos-latest");
+  assert.equal(body.releaseNotesUrl, "https://localhost/releases/latest");
 });
 
 test("GET /downloads/hkipo-macos-latest redirects to the configured package URL", async () => {
@@ -122,7 +123,7 @@ test("GET /downloads/hkipo-macos-latest redirects to the configured package URL"
   const response = await app.request("https://localhost/downloads/hkipo-macos-latest");
 
   assert.equal(response.status, 302);
-  assert.equal(response.headers.get("location"), "https://example.com/downloads/hkipo-macos-latest.dmg");
+  assert.equal(response.headers.get("location"), "https://hkipo.langtangs.com/downloads/HK-IPO-macOS.dmg");
 });
 
 test("GET /favicon.ico returns the site favicon", async () => {

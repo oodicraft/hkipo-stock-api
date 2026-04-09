@@ -8,8 +8,8 @@
     "brand": "HKIPO Stock api",
     "tagline": "Public Hong Kong IPO data.",
     "primaryCta": {
-      "href": "/v2/ipos?limit=10",
-      "label": "Open /v2 feed"
+      "href": "/downloads/hkipo-macos-latest",
+      "label": "Download macOS app"
     }
   },
   "hero": {
@@ -67,6 +67,11 @@
       ]
     }
   ],
+  "macApp": {
+    "title": "Native macOS with hkipo api.",
+    "description": "Keep your Hong Kong IPO subscriptions in view from the menu bar.",
+    "imageAlt": "HK IPO macOS app screenshot showing the desktop IPO tracking interface."
+  },
   "marketPulse": {
     "title": "Live service status.",
     "description": "Current Worker health and sync summary.",

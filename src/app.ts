@@ -117,7 +117,8 @@ export function createApp(overrides: Partial<AppDependencies> = {}) {
         platform: parseRequiredText(c.req.query("platform"), "platform"),
         channel: parseRequiredText(c.req.query("channel"), "channel"),
         currentVersion: parseRequiredText(c.req.query("currentVersion"), "currentVersion"),
-        currentBuild
+        currentBuild,
+        origin: new URL(c.req.url).origin
       })
     );
   });
