@@ -2,7 +2,13 @@
 
 Cloudflare Worker + Hono + D1 backend for Hong Kong IPO data.
 
-![Project screenshot](./screenshot.jpg)
+Backend landing page:
+
+![Project screenshot](./public/screenshot.jpg)
+
+macOS app preview:
+
+![macOS screenshot](./public/screenshot-macos.jpg)
 
 ## What It Does
 
@@ -61,4 +67,3 @@ npm run dev
 ```bash
 npx wrangler secret put JINA_KEY
 ```
-
