@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { ANALYTICS_CLIENT_PATH } from "../src/analytics";
 import { createApp } from "../src/app";
 
 function createTestApp(overrides: Parameters<typeof createApp>[0] = {}) {
@@ -20,6 +21,8 @@ function createTestApp(overrides: Parameters<typeof createApp>[0] = {}) {
     getLatestIPOItems: async () => [],
     listIPOs: async () => [],
     getIPODetail: async () => null,
+    trackLandingPageView: async () => {},
+    ingestClientAnalyticsPayload: async () => {},
     ...overrides
   });
 }
@@ -74,4 +77,74 @@ test("internal errors return a generic 500 response", async () => {
 
   assert.equal(response.status, 500);
   assert.deepEqual(body, { error: "Internal Server Error" });
+});
+
+test("GET / triggers landing page analytics tracking", async () => {
+  let trackedURL = "";
+  const app = createTestApp({
+    trackLandingPageView: async (_env, request) => {
+      trackedURL = request.url;
+    }
+  });
+
+  const response = await app.request("https://localhost/");
+
+  assert.equal(response.status, 200);
+  assert.equal(trackedURL, "https://localhost/");
+});
+
+test("POST /v2/analytics/client returns 202 for valid client payloads", async () => {
+  let capturedPayload: unknown = null;
+  const app = createTestApp({
+    ingestClientAnalyticsPayload: async (_env, _request, payload) => {
+      capturedPayload = payload;
+    }
+  });
+
+  const response = await app.request(ANALYTICS_CLIENT_PATH, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json"
+    },
+    body: JSON.stringify({
+      event: "app_active",
+      installId: "abc123",
+      occurredAt: "2026-04-09T09:12:00Z",
+      appVersion: "1.0.0",
+      platform: "macos"
+    })
+  });
+  const body = await response.json();
+
+  assert.equal(response.status, 202);
+  assert.deepEqual(body, { ok: true });
+  assert.deepEqual(capturedPayload, {
+    event: "app_active",
+    installId: "abc123",
+    occurredAt: "2026-04-09T09:12:00Z",
+    appVersion: "1.0.0",
+    platform: "macos"
+  });
+});
+
+test("POST /v2/analytics/client returns 400 when analytics payload is invalid", async () => {
+  const app = createTestApp({
+    ingestClientAnalyticsPayload: async () => {
+      throw new Error("Unsupported analytics event");
+    }
+  });
+
+  const response = await app.request("https://localhost/v2/analytics/client", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json"
+    },
+    body: JSON.stringify({
+      event: "detail_view"
+    })
+  });
+  const body = await response.json();
+
+  assert.equal(response.status, 400);
+  assert.deepEqual(body, { error: "Unsupported analytics event" });
 });

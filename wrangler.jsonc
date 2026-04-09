@@ -15,14 +15,29 @@
   ],
   "triggers": {
     "crons": [
-      "0 1 * * *"
+      "0 1 * * *",
+      "17 * * * *"
     ]
   },
+  "analytics_engine_datasets": [
+    {
+      "binding": "ANALYTICS",
+      "dataset": "hkipo_analytics"
+    }
+  ],
   "d1_databases": [
     {
       "binding": "HKIPO_DB",
       "database_name": "hkipo-db-prod",
       "database_id": "b60a42aa-c708-40a0-9d84-de1b60196590"
+    },
+    {
+      "binding": "ANALYTICS_DB",
+      "database_name": "analytics-db-prod",
+      "database_id": "7c525003-a625-4760-ac9c-1ebe4908bb4a"
     }
-  ]
+  ],
+  "vars": {
+    "CF_ACCOUNT_ID": "1b274046e2cd493b06953fe9fafe1fc2"
+  },
 }

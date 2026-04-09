@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
+import { ANALYTICS_CLIENT_PATH, ingestClientAnalyticsPayload, trackLandingPageView } from "./analytics";
 import { renderLandingPage } from "./landing";
 import type { ListQuery } from "./repository";
 import { fetchAndParseIPOData } from "./scraper";
@@ -17,6 +18,8 @@ interface AppDependencies {
   getLatestIPOItems: (env: Env, limit: number) => Promise<IPOListItem[]>;
   listIPOs: (env: Env, query: ListQuery) => Promise<IPOListItem[]>;
   getIPODetail: (env: Env, code: string) => Promise<IPODetail | null>;
+  trackLandingPageView: (env: Partial<Env>, request: Request) => Promise<void>;
+  ingestClientAnalyticsPayload: (env: Partial<Env>, request: Request, payload: unknown) => Promise<void>;
 }
 
 const defaultDependencies: AppDependencies = {
@@ -24,7 +27,9 @@ const defaultDependencies: AppDependencies = {
   getIPOStats,
   getLatestIPOItems,
   listIPOs,
-  getIPODetail
+  getIPODetail,
+  trackLandingPageView,
+  ingestClientAnalyticsPayload
 };
 
 function toPublicSyncSummary(sync: IPOStats["latestSync"]): PublicSyncSummary | null {
@@ -48,6 +53,23 @@ export function createApp(overrides: Partial<AppDependencies> = {}) {
   const app = new Hono<{ Bindings: Env }>();
 
   app.get("/", async (c) => {
+    const trackRequest = dependencies.trackLandingPageView(c.env, c.req.raw).catch((error) => {
+      console.error("Failed tracking landing page view", error);
+    });
+
+    let executionCtx: ExecutionContext | null = null;
+    try {
+      executionCtx = c.executionCtx;
+    } catch {
+      executionCtx = null;
+    }
+
+    if (executionCtx) {
+      executionCtx.waitUntil(trackRequest);
+    } else {
+      void trackRequest;
+    }
+
     const [health, stats, latestItems] = await Promise.all([
       dependencies.getServiceHealth(c.env),
       dependencies.getIPOStats(c.env),
@@ -87,6 +109,20 @@ export function createApp(overrides: Partial<AppDependencies> = {}) {
       throw new HTTPException(404, { message: "IPO not found" });
     }
     return c.json(detail);
+  });
+
+  app.post(ANALYTICS_CLIENT_PATH, async (c) => {
+    let payload: unknown;
+
+    try {
+      payload = await c.req.json();
+      await dependencies.ingestClientAnalyticsPayload(c.env, c.req.raw, payload);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Invalid analytics request";
+      throw new HTTPException(message.includes("configured") ? 503 : 400, { message });
+    }
+
+    return c.json({ ok: true }, 202);
   });
 
   app.onError((error, c) => {

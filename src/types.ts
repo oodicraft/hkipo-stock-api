@@ -2,6 +2,11 @@ export type IPOStatus = "upcoming" | "open" | "listed";
 
 export interface Env {
   HKIPO_DB: D1Database;
+  ANALYTICS_DB: D1Database;
+  ANALYTICS: AnalyticsEngineDataset;
+  ANALYTICS_SALT: string;
+  CF_ACCOUNT_ID: string;
+  CF_ANALYTICS_API_TOKEN: string;
   JINA_KEY?: string;
 }
 
