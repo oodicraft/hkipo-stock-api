@@ -1,0 +1,14 @@
+{
+  "platform": "macos",
+  "channel": "direct",
+  "latestVersion": "2.2.0",
+  "latestBuild": 7,
+  "downloadUrl": "https://hkipo.langtangs.com/downloads/hkipo-macos-latest.dmg",
+  "publishedAt": "2026-04-09T12:00:00+08:00",
+  "notes": "修复时区一致性，调整通知授权触发时机，并增加官网版手动检查更新链路。",
+  "releaseNotes": [
+    "统一 IPO 市场日历到 Asia/Shanghai，避免跨时区用户看到错误的今日事件与筛选结果。",
+    "暗盘提醒改为用户主动开启时才请求通知权限，减少首次启动打扰。",
+    "官网直装版新增手动检查更新入口，后续可继续扩展到自动更新。"
+  ]
+}

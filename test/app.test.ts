@@ -93,6 +93,48 @@ test("GET / triggers landing page analytics tracking", async () => {
   assert.equal(trackedURL, "https://localhost/");
 });
 
+test("GET /privacy returns the privacy policy page", async () => {
+  const app = createTestApp();
+  const response = await app.request("https://localhost/privacy");
+  const html = await response.text();
+
+  assert.equal(response.status, 200);
+  assert.match(html, /HOOOK 隐私政策/);
+  assert.match(html, /Workers Analytics Engine/);
+});
+
+test("GET /v2/app/update returns direct channel release metadata", async () => {
+  const app = createTestApp();
+  const response = await app.request(
+    "https://localhost/v2/app/update?platform=macos&channel=direct&currentVersion=2.1.0&currentBuild=6"
+  );
+  const body = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.equal(body.updateAvailable, true);
+  assert.equal(body.latestVersion, "2.2.0");
+  assert.equal(body.latestBuild, 7);
+  assert.equal(body.downloadUrl, "/downloads/hkipo-macos-latest");
+});
+
+test("GET /downloads/hkipo-macos-latest redirects to the configured package URL", async () => {
+  const app = createTestApp();
+  const response = await app.request("https://localhost/downloads/hkipo-macos-latest");
+
+  assert.equal(response.status, 302);
+  assert.equal(response.headers.get("location"), "https://example.com/downloads/hkipo-macos-latest.dmg");
+});
+
+test("GET /favicon.ico returns the site favicon", async () => {
+  const app = createTestApp();
+  const response = await app.request("https://localhost/favicon.ico");
+  const body = await response.arrayBuffer();
+
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get("content-type"), "image/x-icon");
+  assert.ok(body.byteLength > 0);
+});
+
 test("POST /v2/analytics/client returns 202 for valid client payloads", async () => {
   let capturedPayload: unknown = null;
   const app = createTestApp({

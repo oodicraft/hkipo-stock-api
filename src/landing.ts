@@ -1,4 +1,5 @@
 import landingContent from "./content.json" with { type: "json" };
+import { PRIVACY_POLICY_PATH } from "./site";
 import type { IPOListItem, IPOStats, ServiceHealth } from "./types";
 
 interface LandingPageData {
@@ -273,6 +274,7 @@ export function renderLandingPage(data: LandingPageData): string {
       name="description"
       content="${escapeHtml(content.meta.description)}"
     />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -797,7 +799,7 @@ export function renderLandingPage(data: LandingPageData): string {
         </main>
 
         <footer class="site-footer">
-          ${renderInlineText(content.footer.copy)}
+          ${renderInlineText(content.footer.copy)} · <a href="${PRIVACY_POLICY_PATH}">Privacy Policy</a>
         </footer>
       </div>
     </div>

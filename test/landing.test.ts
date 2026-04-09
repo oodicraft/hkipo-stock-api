@@ -50,4 +50,6 @@ test("renderLandingPage includes the editorial landing structure and ipo data", 
   assert.match(html, /\/v2\/ipos/);
   assert.match(html, /Operational/);
   assert.match(html, /Connected/);
+  assert.match(html, /Privacy Policy/);
+  assert.match(html, /rel="icon"/);
 });

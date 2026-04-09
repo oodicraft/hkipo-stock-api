@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { ANALYTICS_CLIENT_PATH, ingestClientAnalyticsPayload, trackLandingPageView } from "./analytics";
 import { renderLandingPage } from "./landing";
+import { DOWNLOAD_LATEST_PATH, PRIVACY_POLICY_PATH, RELEASE_NOTES_PATH, faviconResponse, getAppUpdate, getLatestDownloadUrl, renderPrivacyPolicyPage, renderReleaseNotesPage } from "./site";
 import type { ListQuery } from "./repository";
 import { fetchAndParseIPOData } from "./scraper";
 import { getIPODetail, getIPOStats, getLatestIPOItems, getServiceHealth, listIPOs, upsertCurrentAndArchive } from "./repository";
@@ -10,6 +11,14 @@ import type { Env, IPODetail, IPOListItem, IPOStats, PublicIPOStats, PublicSyncS
 function parseNumber(value: string | undefined, fallback: number): number {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function parseRequiredText(value: string | undefined, field: string): string {
+  if (!value || value.trim().length === 0) {
+    throw new HTTPException(400, { message: `Missing ${field}` });
+  }
+
+  return value;
 }
 
 interface AppDependencies {
@@ -52,6 +61,8 @@ export function createApp(overrides: Partial<AppDependencies> = {}) {
   const dependencies = { ...defaultDependencies, ...overrides };
   const app = new Hono<{ Bindings: Env }>();
 
+  app.get("/favicon.ico", () => faviconResponse());
+
   app.get("/", async (c) => {
     const trackRequest = dependencies.trackLandingPageView(c.env, c.req.raw).catch((error) => {
       console.error("Failed tracking landing page view", error);
@@ -79,8 +90,36 @@ export function createApp(overrides: Partial<AppDependencies> = {}) {
     return c.html(renderLandingPage({ health, stats, latestItems }));
   });
 
+  app.get(PRIVACY_POLICY_PATH, (c) => {
+    return c.html(renderPrivacyPolicyPage());
+  });
+
+  app.get(RELEASE_NOTES_PATH, (c) => {
+    return c.html(renderReleaseNotesPage());
+  });
+
+  app.get(DOWNLOAD_LATEST_PATH, (c) => {
+    return c.redirect(getLatestDownloadUrl(), 302);
+  });
+
   app.get("/v2/health", async (c) => {
     return c.json(await dependencies.getServiceHealth(c.env));
+  });
+
+  app.get("/v2/app/update", (c) => {
+    const currentBuild = parseNumber(c.req.query("currentBuild"), Number.NaN);
+    if (!Number.isFinite(currentBuild)) {
+      throw new HTTPException(400, { message: "Missing currentBuild" });
+    }
+
+    return c.json(
+      getAppUpdate({
+        platform: parseRequiredText(c.req.query("platform"), "platform"),
+        channel: parseRequiredText(c.req.query("channel"), "channel"),
+        currentVersion: parseRequiredText(c.req.query("currentVersion"), "currentVersion"),
+        currentBuild
+      })
+    );
   });
 
   app.get("/v2/ipos", async (c) => {
