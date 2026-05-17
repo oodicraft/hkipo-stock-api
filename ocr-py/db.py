@@ -16,6 +16,7 @@ BASE_DIR = Path(__file__).resolve().parent
 REPO_DIR = BASE_DIR.parent
 LOCAL_DB_PATH = BASE_DIR / "data" / "hkex_ipo_allotment.sqlite"
 D1_DATABASE_NAME = "hkipo-db-prod"
+CLOUDFLARE_ACCOUNT_ID = "1b274046e2cd493b06953fe9fafe1fc2"
 DOCUMENT_COLUMNS = [
     "news_id",
     "stock_code",
@@ -43,7 +44,9 @@ class IPOCurrentRecord:
 
 def _run_wrangler(args: list[str]) -> list[dict[str, Any]]:
     command = ["npx", "wrangler", "d1", "execute", D1_DATABASE_NAME, "--remote", "--json", *args]
-    result = subprocess.run(command, cwd=REPO_DIR, capture_output=True, text=True, check=False)
+    env = os.environ.copy()
+    env.setdefault("CLOUDFLARE_ACCOUNT_ID", CLOUDFLARE_ACCOUNT_ID)
+    result = subprocess.run(command, cwd=REPO_DIR, env=env, capture_output=True, text=True, check=False)
     if result.returncode != 0:
         raise RuntimeError(
             "wrangler d1 execute failed\n"
