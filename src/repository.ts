@@ -1,5 +1,5 @@
 import { currentChinaDate, nowInChinaISOString } from "./date";
-import type { Env, IPODetail, IPOListItem, IPOStats, ScrapedIPORecord, ServiceHealth, SyncSummary } from "./types";
+import type { AllocationRow, Env, IPODetail, IPOListItem, IPOStats, ScrapedIPORecord, ServiceHealth, SyncSummary } from "./types";
 
 export interface ListQuery {
   status?: string | null;
@@ -44,6 +44,29 @@ function mapDetail(row: Record<string, unknown>): IPODetail {
     underwriter: String(row.underwriter ?? ""),
     syncedAt: String(row.synced_at ?? "")
   };
+}
+
+function mapAllocationRow(row: Record<string, unknown>): AllocationRow {
+  return {
+    id: Number(row.id),
+    newsId: String(row.news_id),
+    pool: String(row.pool),
+    sharesApplied: Number(row.shares_applied),
+    validApplications: Number(row.valid_applications),
+    allocationText: String(row.allocation_text),
+    successfulApplications: row.successful_applications === null || row.successful_applications === undefined ? null : Number(row.successful_applications),
+    allottedSharesPerSuccessfulApplication:
+      row.allotted_shares_per_successful_application === null || row.allotted_shares_per_successful_application === undefined
+        ? null
+        : Number(row.allotted_shares_per_successful_application),
+    allottedPercentText: String(row.allotted_percent_text),
+    allottedRatio: row.allotted_ratio === null || row.allotted_ratio === undefined ? null : Number(row.allotted_ratio),
+    rowOrder: Number(row.row_order)
+  };
+}
+
+export function normalizeStockCode(code: string): string {
+  return code.trim().padStart(5, "0");
 }
 
 function normalizeLimit(value: number | undefined): number {
@@ -97,6 +120,30 @@ export function buildListQuery(query: ListQuery): { sql: string; params: unknown
       LIMIT ? OFFSET ?
     `,
     params: [...params, limit, offset]
+  };
+}
+
+export function buildAllocationRowsByCodeQuery(code: string): { sql: string; params: unknown[] } {
+  return {
+    sql: `
+      SELECT
+        r.id,
+        r.news_id,
+        r.pool,
+        r.shares_applied,
+        r.valid_applications,
+        r.allocation_text,
+        r.successful_applications,
+        r.allotted_shares_per_successful_application,
+        r.allotted_percent_text,
+        r.allotted_ratio,
+        r.row_order
+      FROM allocation_rows r
+      INNER JOIN documents d ON d.news_id = r.news_id
+      WHERE d.stock_code = ?
+      ORDER BY d.release_time DESC, r.row_order ASC, r.id ASC
+    `,
+    params: [normalizeStockCode(code)]
   };
 }
 
@@ -289,6 +336,12 @@ export async function getIPODetail(env: Env, code: string): Promise<IPODetail | 
     .first<Record<string, unknown>>();
 
   return result ? mapDetail(result) : null;
+}
+
+export async function getAllocationRowsByCode(env: Env, code: string): Promise<AllocationRow[]> {
+  const statement = buildAllocationRowsByCodeQuery(code);
+  const result = await env.HKIPO_DB.prepare(statement.sql).bind(...statement.params).all<Record<string, unknown>>();
+  return (result.results ?? []).map(mapAllocationRow);
 }
 
 export async function getLatestSyncSummary(env: Env): Promise<SyncSummary | null> {

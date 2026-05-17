@@ -5,8 +5,8 @@ import { renderLandingPage } from "./landing";
 import { DOWNLOAD_LATEST_PATH, PRIVACY_POLICY_PATH, RELEASE_NOTES_PATH, faviconResponse, getAppUpdate, getLatestDownloadUrl, renderPrivacyPolicyPage, renderReleaseNotesPage } from "./site";
 import type { ListQuery } from "./repository";
 import { fetchAndParseIPOData } from "./scraper";
-import { getIPODetail, getIPOStats, getLatestIPOItems, getServiceHealth, listIPOs, upsertCurrentAndArchive } from "./repository";
-import type { Env, IPODetail, IPOListItem, IPOStats, PublicIPOStats, PublicSyncSummary, ServiceHealth } from "./types";
+import { getAllocationRowsByCode, getIPODetail, getIPOStats, getLatestIPOItems, getServiceHealth, listIPOs, upsertCurrentAndArchive } from "./repository";
+import type { AllocationRow, Env, IPODetail, IPOListItem, IPOStats, PublicIPOStats, PublicSyncSummary, ServiceHealth } from "./types";
 
 function parseNumber(value: string | undefined, fallback: number): number {
   const parsed = Number(value);
@@ -27,6 +27,7 @@ interface AppDependencies {
   getLatestIPOItems: (env: Env, limit: number) => Promise<IPOListItem[]>;
   listIPOs: (env: Env, query: ListQuery) => Promise<IPOListItem[]>;
   getIPODetail: (env: Env, code: string) => Promise<IPODetail | null>;
+  getAllocationRowsByCode: (env: Env, code: string) => Promise<AllocationRow[]>;
   trackLandingPageView: (env: Partial<Env>, request: Request) => Promise<void>;
   ingestClientAnalyticsPayload: (env: Partial<Env>, request: Request, payload: unknown) => Promise<void>;
 }
@@ -37,6 +38,7 @@ const defaultDependencies: AppDependencies = {
   getLatestIPOItems,
   listIPOs,
   getIPODetail,
+  getAllocationRowsByCode,
   trackLandingPageView,
   ingestClientAnalyticsPayload
 };
@@ -141,6 +143,14 @@ export function createApp(overrides: Partial<AppDependencies> = {}) {
 
   app.get("/v2/ipos/stats", async (c) => {
     return c.json(toPublicIPOStats(await dependencies.getIPOStats(c.env)));
+  });
+
+  app.get("/v2/ipos/:code/allocation-rows", async (c) => {
+    const items = await dependencies.getAllocationRowsByCode(c.env, c.req.param("code"));
+    return c.json({
+      items,
+      count: items.length
+    });
   });
 
   app.get("/v2/ipos/:code", async (c) => {

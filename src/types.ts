@@ -66,6 +66,20 @@ export interface IPODetail extends IPOListItem {
   syncedAt: string;
 }
 
+export interface AllocationRow {
+  id: number;
+  newsId: string;
+  pool: string;
+  sharesApplied: number;
+  validApplications: number;
+  allocationText: string;
+  successfulApplications: number | null;
+  allottedSharesPerSuccessfulApplication: number | null;
+  allottedPercentText: string;
+  allottedRatio: number | null;
+  rowOrder: number;
+}
+
 export interface SyncSummary {
   id: string;
   startedAt: string;

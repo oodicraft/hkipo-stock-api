@@ -57,6 +57,7 @@ npm run dev
 
 - `GET /v2/ipos`
 - `GET /v2/ipos/:code`
+- `GET /v2/ipos/:code/allocation-rows`
 - `GET /v2/ipos/stats`
 - `GET /v2/health`
 

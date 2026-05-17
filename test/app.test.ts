@@ -21,6 +21,7 @@ function createTestApp(overrides: Parameters<typeof createApp>[0] = {}) {
     getLatestIPOItems: async () => [],
     listIPOs: async () => [],
     getIPODetail: async () => null,
+    getAllocationRowsByCode: async () => [],
     trackLandingPageView: async () => {},
     ingestClientAnalyticsPayload: async () => {},
     ...overrides
@@ -124,6 +125,54 @@ test("GET /downloads/hkipo-macos-latest redirects to the configured package URL"
 
   assert.equal(response.status, 302);
   assert.equal(response.headers.get("location"), "https://hkipo.langtangs.com/downloads/HK-IPO-macOS.dmg");
+});
+
+test("GET /v2/ipos/:code/allocation-rows returns allocation rows for the requested code", async () => {
+  let requestedCode = "";
+  const row = {
+    id: 1,
+    newsId: "123456",
+    pool: "A",
+    sharesApplied: 2000,
+    validApplications: 100,
+    allocationText: "50 out of 100 valid applications receive 200 shares",
+    successfulApplications: 50,
+    allottedSharesPerSuccessfulApplication: 200,
+    allottedPercentText: "50%",
+    allottedRatio: 0.5,
+    rowOrder: 1
+  };
+  const app = createTestApp({
+    getAllocationRowsByCode: async (_env, code) => {
+      requestedCode = code;
+      return [row];
+    }
+  });
+
+  const response = await app.request("https://localhost/v2/ipos/01236/allocation-rows");
+  const body = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.equal(requestedCode, "01236");
+  assert.deepEqual(body, {
+    items: [row],
+    count: 1
+  });
+});
+
+test("GET /v2/ipos/:code/allocation-rows returns an empty list when no rows exist", async () => {
+  const app = createTestApp({
+    getAllocationRowsByCode: async () => []
+  });
+
+  const response = await app.request("https://localhost/v2/ipos/09999/allocation-rows");
+  const body = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.deepEqual(body, {
+    items: [],
+    count: 0
+  });
 });
 
 test("GET /favicon.ico returns the site favicon", async () => {

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { buildListQuery } from "../src/repository";
+import { buildAllocationRowsByCodeQuery, buildListQuery, normalizeStockCode } from "../src/repository";
 import { cleanOptionalText } from "../src/cleaning";
 import { inferIPOStatus, inferRecordYearContext, normalizeChinaDate } from "../src/date";
 
@@ -55,4 +55,19 @@ test("buildListQuery includes status, keyword and date filters", () => {
   assert.match(sql, /sub_start >= \?/);
   assert.match(sql, /sub_start <= \?/);
   assert.deepEqual(params, ["open", "%宁德%", "%宁德%", "2026-04-01", "2026-04-30", 50, 10]);
+});
+
+test("normalizeStockCode trims and pads stock codes to five digits", () => {
+  assert.equal(normalizeStockCode("1236"), "01236");
+  assert.equal(normalizeStockCode(" 01236 "), "01236");
+});
+
+test("buildAllocationRowsByCodeQuery joins documents and filters by stock code", () => {
+  const { sql, params } = buildAllocationRowsByCodeQuery("1236");
+
+  assert.match(sql, /FROM allocation_rows r/);
+  assert.match(sql, /INNER JOIN documents d ON d\.news_id = r\.news_id/);
+  assert.match(sql, /WHERE d\.stock_code = \?/);
+  assert.match(sql, /ORDER BY d\.release_time DESC, r\.row_order ASC, r\.id ASC/);
+  assert.deepEqual(params, ["01236"]);
 });
