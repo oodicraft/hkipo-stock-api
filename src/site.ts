@@ -176,8 +176,6 @@ export function renderPrivacyPolicyPage(): string {
     <section>
       <h2>我们会收集哪些数据</h2>
       <ul>
-        <li>网站访问时的基础访问统计，例如页面浏览量、访客去重后的日活数据。</li>
-        <li>macOS 应用最小范围的匿名使用数据，包括应用活跃和用户保存申购数据的行为。</li>
         <li>你在本地填写和保存的申购数量、中签数量、申购方式等数据。</li>
       </ul>
     </section>
@@ -186,12 +184,8 @@ export function renderPrivacyPolicyPage(): string {
       <p>你在 HOOOK 中录入的用户申购数据默认保存在你的设备本地，用于展示资金占用、申购记录和备份导入导出。</p>
     </section>
     <section>
-      <h2>网站访问与应用埋点</h2>
-      <p>我们仅使用基础分析能力统计网站访问和应用活跃，不会在分析库中保存你的明文 IP 地址，也不会保存明文设备标识。用于分析的标识会在进入分析系统前进行匿名化处理。</p>
-    </section>
-    <section>
       <h2>使用的基础设施</h2>
-      <p>网站与 API 运行在 Cloudflare Workers 上，分析数据会使用 Cloudflare D1 和 Workers Analytics Engine 进行汇总与存储。</p>
+      <p>网站与 API 运行在 Cloudflare Workers 上，IPO 数据会使用 Cloudflare D1 进行存储。</p>
     </section>
     <section>
       <h2>数据保留与安全</h2>

@@ -1,6 +1,5 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { ANALYTICS_CLIENT_PATH } from "../src/analytics";
 import { createApp } from "../src/app";
 
 function createTestApp(overrides: Parameters<typeof createApp>[0] = {}) {
@@ -22,8 +21,7 @@ function createTestApp(overrides: Parameters<typeof createApp>[0] = {}) {
     listIPOs: async () => [],
     getIPODetail: async () => null,
     getAllocationRowsByCode: async () => [],
-    trackLandingPageView: async () => {},
-    ingestClientAnalyticsPayload: async () => {},
+    getLatestAllocationChartStocks: async () => [],
     ...overrides
   });
 }
@@ -80,20 +78,6 @@ test("internal errors return a generic 500 response", async () => {
   assert.deepEqual(body, { error: "Internal Server Error" });
 });
 
-test("GET / triggers landing page analytics tracking", async () => {
-  let trackedURL = "";
-  const app = createTestApp({
-    trackLandingPageView: async (_env, request) => {
-      trackedURL = request.url;
-    }
-  });
-
-  const response = await app.request("https://localhost/");
-
-  assert.equal(response.status, 200);
-  assert.equal(trackedURL, "https://localhost/");
-});
-
 test("GET /privacy returns the privacy policy page", async () => {
   const app = createTestApp();
   const response = await app.request("https://localhost/privacy");
@@ -101,7 +85,7 @@ test("GET /privacy returns the privacy policy page", async () => {
 
   assert.equal(response.status, 200);
   assert.match(html, /HOOOK 隐私政策/);
-  assert.match(html, /Workers Analytics Engine/);
+  assert.match(html, /Cloudflare D1/);
 });
 
 test("GET /v2/app/update returns direct channel release metadata", async () => {
@@ -175,6 +159,87 @@ test("GET /v2/ipos/:code/allocation-rows returns an empty list when no rows exis
   });
 });
 
+test("GET /allocation-charts returns allocation chart HTML", async () => {
+  const app = createTestApp({
+    getLatestAllocationChartStocks: async () => [
+      {
+        stockCode: "01236",
+        stockName: "Example Holdings",
+        releaseTime: "18/05/2026 16:30",
+        newsId: "news-1236",
+        pools: [
+          {
+            pool: "A",
+            points: [
+              {
+                sharesApplied: 2000,
+                validApplications: 100,
+                allottedPercentText: "50%",
+                rowOrder: 1
+              }
+            ]
+          },
+          {
+            pool: "B",
+            points: [
+              {
+                sharesApplied: 100000,
+                validApplications: 12,
+                allottedPercentText: "10%",
+                rowOrder: 2
+              }
+            ]
+          }
+        ]
+      },
+      {
+        stockCode: "09999",
+        stockName: "Second IPO",
+        releaseTime: "17/05/2026 12:00",
+        newsId: "news-9999",
+        pools: [
+          {
+            pool: "A",
+            points: [
+              {
+                sharesApplied: 5000,
+                validApplications: 250,
+                allottedPercentText: "25%",
+                rowOrder: 1
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  });
+
+  const response = await app.request("https://localhost/allocation-charts");
+  const html = await response.text();
+
+  assert.equal(response.status, 200);
+  assert.match(html, /Allocation Charts/);
+  assert.match(html, /HK 01236/);
+  assert.match(html, /Example Holdings/);
+  assert.match(html, /Pool A/);
+  assert.match(html, /Pool B/);
+  assert.match(html, /2,000 shares applied; 100 applications/);
+  assert.match(html, /100,000 shares applied; 12 applications/);
+  assert.match(html, /HK 09999/);
+});
+
+test("GET /allocation-charts returns an empty state when no allocation rows exist", async () => {
+  const app = createTestApp({
+    getLatestAllocationChartStocks: async () => []
+  });
+
+  const response = await app.request("https://localhost/allocation-charts");
+  const html = await response.text();
+
+  assert.equal(response.status, 200);
+  assert.match(html, /No allocation rows are available yet/);
+});
+
 test("GET /favicon.ico returns the site favicon", async () => {
   const app = createTestApp();
   const response = await app.request("https://localhost/favicon.ico");
@@ -183,60 +248,4 @@ test("GET /favicon.ico returns the site favicon", async () => {
   assert.equal(response.status, 200);
   assert.equal(response.headers.get("content-type"), "image/x-icon");
   assert.ok(body.byteLength > 0);
-});
-
-test("POST /v2/analytics/client returns 202 for valid client payloads", async () => {
-  let capturedPayload: unknown = null;
-  const app = createTestApp({
-    ingestClientAnalyticsPayload: async (_env, _request, payload) => {
-      capturedPayload = payload;
-    }
-  });
-
-  const response = await app.request(ANALYTICS_CLIENT_PATH, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json"
-    },
-    body: JSON.stringify({
-      event: "app_active",
-      installId: "abc123",
-      occurredAt: "2026-04-09T09:12:00Z",
-      appVersion: "1.0.0",
-      platform: "macos"
-    })
-  });
-  const body = await response.json();
-
-  assert.equal(response.status, 202);
-  assert.deepEqual(body, { ok: true });
-  assert.deepEqual(capturedPayload, {
-    event: "app_active",
-    installId: "abc123",
-    occurredAt: "2026-04-09T09:12:00Z",
-    appVersion: "1.0.0",
-    platform: "macos"
-  });
-});
-
-test("POST /v2/analytics/client returns 400 when analytics payload is invalid", async () => {
-  const app = createTestApp({
-    ingestClientAnalyticsPayload: async () => {
-      throw new Error("Unsupported analytics event");
-    }
-  });
-
-  const response = await app.request("https://localhost/v2/analytics/client", {
-    method: "POST",
-    headers: {
-      "content-type": "application/json"
-    },
-    body: JSON.stringify({
-      event: "detail_view"
-    })
-  });
-  const body = await response.json();
-
-  assert.equal(response.status, 400);
-  assert.deepEqual(body, { error: "Unsupported analytics event" });
 });

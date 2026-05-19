@@ -1,5 +1,15 @@
 import { currentChinaDate, nowInChinaISOString } from "./date";
-import type { AllocationRow, Env, IPODetail, IPOListItem, IPOStats, ScrapedIPORecord, ServiceHealth, SyncSummary } from "./types";
+import type {
+  AllocationChartStock,
+  AllocationRow,
+  Env,
+  IPODetail,
+  IPOListItem,
+  IPOStats,
+  ScrapedIPORecord,
+  ServiceHealth,
+  SyncSummary
+} from "./types";
 
 export interface ListQuery {
   status?: string | null;
@@ -65,8 +75,57 @@ function mapAllocationRow(row: Record<string, unknown>): AllocationRow {
   };
 }
 
+function mapAllocationChartStocks(rows: Record<string, unknown>[]): AllocationChartStock[] {
+  const stocks: AllocationChartStock[] = [];
+  const stocksByNewsId = new Map<string, AllocationChartStock>();
+
+  for (const row of rows) {
+    const newsId = String(row.news_id);
+    let stock = stocksByNewsId.get(newsId);
+    if (!stock) {
+      stock = {
+        stockCode: String(row.stock_code),
+        stockName: String(row.stock_name),
+        releaseTime: String(row.release_time),
+        newsId,
+        pools: []
+      };
+      stocksByNewsId.set(newsId, stock);
+      stocks.push(stock);
+    }
+
+    const poolName = String(row.pool);
+    let pool = stock.pools.find((candidate) => candidate.pool === poolName);
+    if (!pool) {
+      pool = {
+        pool: poolName,
+        points: []
+      };
+      stock.pools.push(pool);
+    }
+
+    pool.points.push({
+      sharesApplied: Number(row.shares_applied),
+      validApplications: Number(row.valid_applications),
+      allottedPercentText: String(row.allotted_percent_text),
+      rowOrder: Number(row.row_order)
+    });
+  }
+
+  return stocks;
+}
+
 export function normalizeStockCode(code: string): string {
   return code.trim().padStart(5, "0");
+}
+
+function releaseTimeSortExpression(alias: string): string {
+  return `
+    substr(${alias}.release_time, 7, 4) || '-' ||
+    substr(${alias}.release_time, 4, 2) || '-' ||
+    substr(${alias}.release_time, 1, 2) || ' ' ||
+    substr(${alias}.release_time, 12, 5)
+  `;
 }
 
 function normalizeLimit(value: number | undefined): number {
@@ -144,6 +203,48 @@ export function buildAllocationRowsByCodeQuery(code: string): { sql: string; par
       ORDER BY d.release_time DESC, r.row_order ASC, r.id ASC
     `,
     params: [normalizeStockCode(code)]
+  };
+}
+
+export function buildLatestAllocationChartStocksQuery(): { sql: string; params: unknown[] } {
+  const releaseSort = releaseTimeSortExpression("d");
+  const latestReleaseSort = releaseTimeSortExpression("latest_documents");
+
+  return {
+    sql: `
+      WITH latest_documents AS (
+        SELECT
+          d.news_id,
+          d.stock_code,
+          d.stock_name,
+          d.release_time,
+          ROW_NUMBER() OVER (
+            PARTITION BY d.stock_code
+            ORDER BY ${releaseSort} DESC, d.news_id DESC
+          ) AS stock_document_rank
+        FROM documents d
+        WHERE EXISTS (
+          SELECT 1
+          FROM allocation_rows existing_rows
+          WHERE existing_rows.news_id = d.news_id
+        )
+      )
+      SELECT
+        latest_documents.news_id,
+        latest_documents.stock_code,
+        latest_documents.stock_name,
+        latest_documents.release_time,
+        r.pool,
+        r.shares_applied,
+        r.valid_applications,
+        r.allotted_percent_text,
+        r.row_order
+      FROM latest_documents
+      INNER JOIN allocation_rows r ON r.news_id = latest_documents.news_id
+      WHERE latest_documents.stock_document_rank = 1
+      ORDER BY ${latestReleaseSort} DESC, latest_documents.stock_code ASC, r.pool ASC, r.shares_applied ASC
+    `,
+    params: []
   };
 }
 
@@ -342,6 +443,12 @@ export async function getAllocationRowsByCode(env: Env, code: string): Promise<A
   const statement = buildAllocationRowsByCodeQuery(code);
   const result = await env.HKIPO_DB.prepare(statement.sql).bind(...statement.params).all<Record<string, unknown>>();
   return (result.results ?? []).map(mapAllocationRow);
+}
+
+export async function getLatestAllocationChartStocks(env: Env): Promise<AllocationChartStock[]> {
+  const statement = buildLatestAllocationChartStocksQuery();
+  const result = await env.HKIPO_DB.prepare(statement.sql).bind(...statement.params).all<Record<string, unknown>>();
+  return mapAllocationChartStocks(result.results ?? []);
 }
 
 export async function getLatestSyncSummary(env: Env): Promise<SyncSummary | null> {

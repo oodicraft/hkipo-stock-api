@@ -2,11 +2,7 @@ export type IPOStatus = "upcoming" | "open" | "listed";
 
 export interface Env {
   HKIPO_DB: D1Database;
-  ANALYTICS_DB: D1Database;
-  ANALYTICS: AnalyticsEngineDataset;
-  ANALYTICS_SALT: string;
   CF_ACCOUNT_ID: string;
-  CF_ANALYTICS_API_TOKEN: string;
   JINA_KEY?: string;
 }
 
@@ -78,6 +74,26 @@ export interface AllocationRow {
   allottedPercentText: string;
   allottedRatio: number | null;
   rowOrder: number;
+}
+
+export interface AllocationChartPoint {
+  sharesApplied: number;
+  validApplications: number;
+  allottedPercentText: string;
+  rowOrder: number;
+}
+
+export interface AllocationChartPool {
+  pool: string;
+  points: AllocationChartPoint[];
+}
+
+export interface AllocationChartStock {
+  stockCode: string;
+  stockName: string;
+  releaseTime: string;
+  newsId: string;
+  pools: AllocationChartPool[];
 }
 
 export interface SyncSummary {

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { buildAllocationRowsByCodeQuery, buildListQuery, normalizeStockCode } from "../src/repository";
+import { buildAllocationRowsByCodeQuery, buildLatestAllocationChartStocksQuery, buildListQuery, normalizeStockCode } from "../src/repository";
 import { cleanOptionalText } from "../src/cleaning";
 import { inferIPOStatus, inferRecordYearContext, normalizeChinaDate } from "../src/date";
 
@@ -70,4 +70,17 @@ test("buildAllocationRowsByCodeQuery joins documents and filters by stock code",
   assert.match(sql, /WHERE d\.stock_code = \?/);
   assert.match(sql, /ORDER BY d\.release_time DESC, r\.row_order ASC, r\.id ASC/);
   assert.deepEqual(params, ["01236"]);
+});
+
+test("buildLatestAllocationChartStocksQuery selects latest allocation document per stock", () => {
+  const { sql, params } = buildLatestAllocationChartStocksQuery();
+
+  assert.match(sql, /FROM documents d/);
+  assert.match(sql, /FROM allocation_rows existing_rows/);
+  assert.match(sql, /INNER JOIN allocation_rows r ON r\.news_id = latest_documents\.news_id/);
+  assert.match(sql, /ROW_NUMBER\(\) OVER \(/);
+  assert.match(sql, /PARTITION BY d\.stock_code/);
+  assert.match(sql, /WHERE latest_documents\.stock_document_rank = 1/);
+  assert.match(sql, /ORDER BY[\s\S]*latest_documents\.stock_code ASC, r\.pool ASC, r\.shares_applied ASC/);
+  assert.deepEqual(params, []);
 });

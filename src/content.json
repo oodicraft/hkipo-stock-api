@@ -114,6 +114,11 @@
         "copy": "Counts and latest sync."
       },
       {
+        "href": "/allocation-charts",
+        "path": "/allocation-charts",
+        "copy": "Allocation row charts."
+      },
+      {
         "href": "/v2/ipos/02729",
         "path": "/v2/ipos/:code",
         "copy": "Single IPO detail."

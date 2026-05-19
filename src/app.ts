@@ -1,12 +1,31 @@
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
-import { ANALYTICS_CLIENT_PATH, ingestClientAnalyticsPayload, trackLandingPageView } from "./analytics";
+import { renderAllocationChartsPage } from "./allocationCharts";
 import { renderLandingPage } from "./landing";
 import { DOWNLOAD_LATEST_PATH, PRIVACY_POLICY_PATH, RELEASE_NOTES_PATH, faviconResponse, getAppUpdate, getLatestDownloadUrl, renderPrivacyPolicyPage, renderReleaseNotesPage } from "./site";
 import type { ListQuery } from "./repository";
 import { fetchAndParseIPOData } from "./scraper";
-import { getAllocationRowsByCode, getIPODetail, getIPOStats, getLatestIPOItems, getServiceHealth, listIPOs, upsertCurrentAndArchive } from "./repository";
-import type { AllocationRow, Env, IPODetail, IPOListItem, IPOStats, PublicIPOStats, PublicSyncSummary, ServiceHealth } from "./types";
+import {
+  getAllocationRowsByCode,
+  getIPODetail,
+  getIPOStats,
+  getLatestAllocationChartStocks,
+  getLatestIPOItems,
+  getServiceHealth,
+  listIPOs,
+  upsertCurrentAndArchive
+} from "./repository";
+import type {
+  AllocationChartStock,
+  AllocationRow,
+  Env,
+  IPODetail,
+  IPOListItem,
+  IPOStats,
+  PublicIPOStats,
+  PublicSyncSummary,
+  ServiceHealth
+} from "./types";
 
 function parseNumber(value: string | undefined, fallback: number): number {
   const parsed = Number(value);
@@ -28,8 +47,7 @@ interface AppDependencies {
   listIPOs: (env: Env, query: ListQuery) => Promise<IPOListItem[]>;
   getIPODetail: (env: Env, code: string) => Promise<IPODetail | null>;
   getAllocationRowsByCode: (env: Env, code: string) => Promise<AllocationRow[]>;
-  trackLandingPageView: (env: Partial<Env>, request: Request) => Promise<void>;
-  ingestClientAnalyticsPayload: (env: Partial<Env>, request: Request, payload: unknown) => Promise<void>;
+  getLatestAllocationChartStocks: (env: Env) => Promise<AllocationChartStock[]>;
 }
 
 const defaultDependencies: AppDependencies = {
@@ -39,8 +57,7 @@ const defaultDependencies: AppDependencies = {
   listIPOs,
   getIPODetail,
   getAllocationRowsByCode,
-  trackLandingPageView,
-  ingestClientAnalyticsPayload
+  getLatestAllocationChartStocks
 };
 
 function toPublicSyncSummary(sync: IPOStats["latestSync"]): PublicSyncSummary | null {
@@ -66,23 +83,6 @@ export function createApp(overrides: Partial<AppDependencies> = {}) {
   app.get("/favicon.ico", () => faviconResponse());
 
   app.get("/", async (c) => {
-    const trackRequest = dependencies.trackLandingPageView(c.env, c.req.raw).catch((error) => {
-      console.error("Failed tracking landing page view", error);
-    });
-
-    let executionCtx: ExecutionContext | null = null;
-    try {
-      executionCtx = c.executionCtx;
-    } catch {
-      executionCtx = null;
-    }
-
-    if (executionCtx) {
-      executionCtx.waitUntil(trackRequest);
-    } else {
-      void trackRequest;
-    }
-
     const [health, stats, latestItems] = await Promise.all([
       dependencies.getServiceHealth(c.env),
       dependencies.getIPOStats(c.env),
@@ -102,6 +102,11 @@ export function createApp(overrides: Partial<AppDependencies> = {}) {
 
   app.get(DOWNLOAD_LATEST_PATH, (c) => {
     return c.redirect(getLatestDownloadUrl(), 302);
+  });
+
+  app.get("/allocation-charts", async (c) => {
+    const stocks = await dependencies.getLatestAllocationChartStocks(c.env);
+    return c.html(renderAllocationChartsPage(stocks));
   });
 
   app.get("/v2/health", async (c) => {
@@ -159,20 +164,6 @@ export function createApp(overrides: Partial<AppDependencies> = {}) {
       throw new HTTPException(404, { message: "IPO not found" });
     }
     return c.json(detail);
-  });
-
-  app.post(ANALYTICS_CLIENT_PATH, async (c) => {
-    let payload: unknown;
-
-    try {
-      payload = await c.req.json();
-      await dependencies.ingestClientAnalyticsPayload(c.env, c.req.raw, payload);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Invalid analytics request";
-      throw new HTTPException(message.includes("configured") ? 503 : 400, { message });
-    }
-
-    return c.json({ ok: true }, 202);
   });
 
   app.onError((error, c) => {
